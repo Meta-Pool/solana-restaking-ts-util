@@ -1,0 +1,19 @@
+{
+  "scripts": {
+    "build": "tsc --build --verbose",
+    "init-devnet": "npm run build && node dist/init/init-devnet.js"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30",
+    "@coral-xyz/spl-token": "^0.30",
+    "@solana/web3.js": "^1.94.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.0",
+    "@types/node": "^20.14.9",
+    "typescript": "^4.5.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

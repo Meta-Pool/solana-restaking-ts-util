@@ -1,0 +1,25 @@
+{
+    "cSpell.ignorePaths": ["**/types/mp_sol_restaking.ts"],
+    "cSpell.words": [
+        "azFVdHtAJN8BX3sbGAYkXvtdjdrT5U6rj9rovvUFos9",
+        "Blockhash",
+        "bsol",
+        "devnet",
+        "DEVYT7nSvD4gzP6BH2N1ubUamErS4TXtBYwdVrFBBVr",
+        "Keypair",
+        "LAMPORTS",
+        "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD",
+        "mpsol",
+        "mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA",
+        "mPsoLV53uAGXnPJw63W91t2VDqCVZcU5rTh3PWzxnLr",
+        "MSOL",
+        "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+        "Rebalancer",
+        "Restaking",
+        "solana",
+        "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy",
+        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "WSOL_"
+    ],
+    "typescript.tsdk": "node_modules/typescript/lib"
+}
