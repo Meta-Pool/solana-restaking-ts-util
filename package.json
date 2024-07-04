@@ -1,7 +1,8 @@
 {
   "scripts": {
     "build": "tsc --build --verbose",
-    "init-devnet": "npm run build && node dist/init/init-devnet.js"
+    "init-devnet": "npm run build && node dist/init/init-devnet.js",
+    "config-devnet": "npm run build && node dist/init/init-devnet.js config-devnet"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30",

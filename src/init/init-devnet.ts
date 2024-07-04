@@ -17,8 +17,8 @@ const depositorUserKeyPair = operatorAuthKeyPair
 
 const program = new anchor.Program(mpSolRestakingIdl as anchor.Idl, provider)
 
-const mpSolMintWalletProvider = util.getNodeFileWalletProvider("mPsoLV53uAGXnPJw63W91t2VDqCVZcU5rTh3PWzxnLr")
 const mainStateWalletProvider = util.getNodeFileWalletProvider("mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA")
+const mpSolMintWalletProvider = util.getNodeFileWalletProvider("mPsoLV53uAGXnPJw63W91t2VDqCVZcU5rTh3PWzxnLr")
 console.log("main state address", mainStateWalletProvider.wallet.publicKey.toBase58())
 
 // MARINADE DEVNET also MAINNET
@@ -47,6 +47,9 @@ else if (process.argv.includes("bsol")) {
         "bSOL",
         B_SOL_TOKEN_MINT
     )
+}
+if (process.argv.includes("config-devnet")) {
+    configDevnet()
 }
 else {
     console.error("expected arg: main|msol|bsol")
@@ -143,4 +146,58 @@ async function createSecondaryVault(
         .rpc();
 
     return vaultSecondaryStateAddress
+}
+
+async function configDevnetVault(mint: string) {
+
+    {
+        console.log("config, enable deposits for", mint)
+        let configTx = await program.methods.configureSecondaryVault({ depositsDisabled: false, tokenDepositCap: null })
+            .accounts({
+                admin: wallet.publicKey,
+                mainState: mainStateWalletProvider.wallet.publicKey,
+                lstMint: new PublicKey(mint),
+            })
+            .rpc()
+    }
+
+}
+
+// config for 0hs waiting time
+async function configWaitTimeHours(hs:number) {
+    const mainStatePubKey = mainStateWalletProvider.wallet.publicKey
+    console.log("config, 0hs wait time")
+    let configTx = await program.methods.configureMainVault({
+        unstakeTicketWaitingHours: hs,
+        treasuryMpsolAccount: null, // null => None => No change
+        performanceFeeBp: null, // null => None => No change
+        newAdminPubkey: null, // null => None => No change
+    }
+    ).accounts({
+        admin: wallet.publicKey,
+        mainState: mainStatePubKey,
+    })
+
+    // // uncomment to show tx simulation program log
+    // {
+    //   console.log("configureMainVault.simulate()")
+    //   try {
+    //     let result = await configTx.simulate()
+    //     console.log(result)
+    //   }
+    //   catch (ex) {
+    //     console.log(ex)
+    //   }
+    // }
+
+    // execute
+    await configTx.rpc()
+}
+
+async function configDevnet() {
+
+    await configWaitTimeHours(0);
+    await configDevnetVault(MARINADE_MSOL_MINT)
+    await configDevnetVault(B_SOL_TOKEN_MINT)
+
 }

@@ -19,6 +19,7 @@
         "solana",
         "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy",
         "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+        "unstake",
         "WSOL_"
     ],
     "typescript.tsdk": "node_modules/typescript/lib"
