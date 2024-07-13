@@ -51,6 +51,9 @@ else if (process.argv.includes("bsol")) {
 if (process.argv.includes("config-devnet")) {
     configDevnet()
 }
+if (process.argv.includes("update-prices")) {
+    updateLSTPrices()
+}
 else {
     console.error("expected arg: main|msol|bsol")
 }
@@ -164,7 +167,7 @@ async function configDevnetVault(mint: string) {
 }
 
 // config for 0hs waiting time
-async function configWaitTimeHours(hs:number) {
+async function configWaitTimeHours(hs: number) {
     const mainStatePubKey = mainStateWalletProvider.wallet.publicKey
     console.log("config, 0hs wait time")
     let configTx = await program.methods.configureMainVault({
@@ -199,5 +202,25 @@ async function configDevnet() {
     await configWaitTimeHours(0);
     await configDevnetVault(MARINADE_MSOL_MINT)
     await configDevnetVault(B_SOL_TOKEN_MINT)
+    await updateLSTPrices()
 
+}
+
+async function updateLSTPrices() {
+
+    await updatePrice(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS)
+    await updatePrice(B_SOL_TOKEN_MINT, B_SOL_SPL_STAKE_POOL_STATE_ADDRESS)
+
+}
+
+async function updatePrice(lstMint: string, stateAccount: string) {
+    return program.methods.updateVaultTokenSolPrice()
+        .accounts({
+            mainState: mainStateWalletProvider.wallet.publicKey,
+            lstMint: lstMint,
+        })
+        .remainingAccounts([{
+            pubkey: new PublicKey(stateAccount), isSigner: false, isWritable: false
+          }])
+        .rpc()
 }
