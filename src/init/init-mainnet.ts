@@ -43,6 +43,14 @@ async function asyncMain() {
     if (process.argv.includes("main")) {
         await createMainState()
     }
+    else if (process.argv.includes("create-treasury")) {
+        await createMpSolTreasuryAccount()
+    }
+    else if (process.argv.includes("set-treasury")) {
+        const index = process.argv.findIndex(x=>x=="set-treasury")
+        const pubkeyString = process.argv[index+1]
+        await configMpSolTreasuryAccount(pubkeyString)
+    }
     else if (process.argv.includes("msol")) {
         await createSecondaryVault(
             mainStateWalletProvider.wallet.publicKey,
@@ -167,6 +175,63 @@ async function createSecondaryVault(
         .rpc();
 
     return vaultSecondaryStateAddress
+}
+
+//-------------------------------
+/// returns vault state address
+async function createMpSolTreasuryAccount() {
+
+    console.log(`creating ATA for owner ${provider.publicKey.toBase58()}, mint ${mpSolMintWalletProvider.publicKey.toBase58()} to use as MpSolTreasuryAccount`)
+
+    const mpsolAta =
+        getAssociatedTokenAddressSync(mpSolMintWalletProvider.publicKey, provider.publicKey, true);
+
+    const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+        program.provider.publicKey,
+        mpsolAta,
+        provider.publicKey,
+        mpSolMintWalletProvider.publicKey,
+        SPL_TOKEN_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+    const tx = new anchor.web3.Transaction()
+    tx.add(createAtaIx)
+    const txHash = await provider.sendAndConfirm(tx)
+    console.log("tx hash", txHash)
+
+    console.log("MpSolTreasuryAccount", mpsolAta.toBase58())
+}
+
+async function configMpSolTreasuryAccount(treasuryAccount: string) {
+
+    const mainStatePubKey = mainStateWalletProvider.wallet.publicKey
+    console.log("config, setTreasury, treasuryMpsolAccount", treasuryAccount)
+    let configTx = await program.methods.configureMainVault({
+        unstakeTicketWaitingHours: null, // null => None => No change
+        treasuryMpsolAccount: new anchor.web3.PublicKey(treasuryAccount),
+        performanceFeeBp: null, // null => None => No change
+        newAdminPubkey: null, // null => None => No change
+    }
+    ).accounts({
+        admin: wallet.publicKey,
+        mainState: mainStatePubKey,
+    })
+
+    // // uncomment to show tx simulation program log
+    // {
+    //   console.log("configureMainVault.simulate()")
+    //   try {
+    //     let result = await configTx.simulate()
+    //     console.log(result)
+    //   }
+    //   catch (ex) {
+    //     console.log(ex)
+    //   }
+    // }
+
+    // execute
+    const configTxHash = await configTx.rpc()
+    console.log("tx hash", configTxHash)
 }
 
 async function configMainnetVault(mint: string) {
