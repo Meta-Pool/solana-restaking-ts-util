@@ -15,15 +15,9 @@ export function idlConstant(idl: Idl, name: string) {
     }
 }
 
-// format a price string with 32-bit precision to a 9 decimal places decimal number
-export function formatPrice32p(priceString32p: string) {
-    let with9DecimalPlaces = (BigInt(priceString32p) * BigInt(ONE_E9) / BigInt(TWO_POW_32)).toString()
-    return `${with9DecimalPlaces.slice(0, -9)}.${with9DecimalPlaces.slice(-9)}`
-}
-
 export function getNodeFileWalletProvider(pubKeyString: string, rpcUrl: string = "https://api.devnet.solana.com") {
     // set env.ANCHOR_WALLET
     process.env.ANCHOR_WALLET = path.join(homedir(), ".config", "solana", pubKeyString + ".json")
-    // DEVNET provider, reads keypair from process.env.ANCHOR_WALLET
+    // reads keypair from process.env.ANCHOR_WALLET
     return AnchorProvider.local(rpcUrl)
 }

@@ -6,19 +6,24 @@ import * as util from "../util/util";
 import { SPL_TOKEN_PROGRAM_ID, splTokenProgram } from "@coral-xyz/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountIdempotentInstruction, getAssociatedTokenAddressSync } from "../util/associated-token-helper";
+import { formatTokens } from "../util/format";
+import { BN } from "bn.js";
 
-const provider = util.getNodeFileWalletProvider("DEVYT7nSvD4gzP6BH2N1ubUamErS4TXtBYwdVrFBBVr")
+process.env.ANCHOR_WALLET
+const provider = util.getNodeFileWalletProvider(
+    "MP5o14fjGUU6G562tivBsvUBohqFxiczbWGHrwXDEyQ",
+    "https://api.mainnet-beta.solana.com")
 const wallet = provider.wallet;
 anchor.setProvider(provider)
 
 const operatorAuthKeyPair = provider.wallet;
-const strategyRebalancerAuthKeyPair = operatorAuthKeyPair
-const depositorUserKeyPair = operatorAuthKeyPair
+const strategyRebalancerAuthKeyPair = provider.wallet;
 
 const program = new anchor.Program(mpSolRestakingIdl as anchor.Idl, provider)
 
 const mainStateWalletProvider = util.getNodeFileWalletProvider("mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA")
 const mpSolMintWalletProvider = util.getNodeFileWalletProvider("mPsoLV53uAGXnPJw63W91t2VDqCVZcU5rTh3PWzxnLr")
+console.log(process.argv)
 console.log("main state address", mainStateWalletProvider.wallet.publicKey.toBase58())
 
 // MARINADE DEVNET also MAINNET
@@ -26,36 +31,49 @@ const MARINADE_MSOL_MINT = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So";
 const MARINADE_POOL_PROGRAM = "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD";
 const MARINADE_STATE_ADDRESS = "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC";
 
-// B-SOL DEVNET
+// B-SOL DEVNET also MAINNET
 const SPL_STAKE_POOL_PROGRAM = "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy"
 const B_SOL_TOKEN_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
-const B_SOL_SPL_STAKE_POOL_STATE_ADDRESS = "azFVdHtAJN8BX3sbGAYkXvtdjdrT5U6rj9rovvUFos9"
+// B-SOL MAINNET
+const B_SOL_SPL_STAKE_POOL_STATE_ADDRESS = "stk9ApL5HeVAwPLr3TLhDXdZS8ptVu7zp6ov8HFDuMi"
 
-if (process.argv.includes("main")) {
-    createMainState()
-}
-else if (process.argv.includes("msol")) {
-    createSecondaryVault(
-        mainStateWalletProvider.wallet.publicKey,
-        "mSOL",
-        MARINADE_MSOL_MINT
-    )
-}
-else if (process.argv.includes("bsol")) {
-    createSecondaryVault(
-        mainStateWalletProvider.wallet.publicKey,
-        "bSOL",
-        B_SOL_TOKEN_MINT
-    )
-}
-else if (process.argv.includes("config-devnet")) {
-    configDevnet()
-}
-else if (process.argv.includes("update-prices")) {
-    updateLSTPrices()
-}
-else {
-    console.error("expected arg: main|msol|bsol")
+asyncMain()
+
+async function asyncMain() {
+    if (process.argv.includes("main")) {
+        await createMainState()
+    }
+    else if (process.argv.includes("msol")) {
+        await createSecondaryVault(
+            mainStateWalletProvider.wallet.publicKey,
+            "mSOL",
+            MARINADE_MSOL_MINT
+        )
+    }
+    else if (process.argv.includes("config-msol")) {
+        await configMainnetVault(MARINADE_MSOL_MINT)
+    }
+    else if (process.argv.includes("update-msol")) {
+        await updatePrice(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS)
+    }
+    else if (process.argv.includes("bsol")) {
+        await createSecondaryVault(
+            mainStateWalletProvider.wallet.publicKey,
+            "bSOL",
+            B_SOL_TOKEN_MINT
+        )
+    }
+    else if (process.argv.includes("config-mainnet")) {
+        await configMainnet()
+    }
+    else if (process.argv.includes("update-prices")) {
+        await updateLSTPrices()
+    }
+    else {
+        console.error("----")
+        console.error("ERR: expected argument: main|msol|bsol")
+        console.error("----")
+    }
 }
 
 async function createMainState() {
@@ -151,25 +169,28 @@ async function createSecondaryVault(
     return vaultSecondaryStateAddress
 }
 
-async function configDevnetVault(mint: string) {
+async function configMainnetVault(mint: string) {
 
-    {
-        console.log("config, enable deposits for", mint)
-        let configTx = await program.methods.configureSecondaryVault({ depositsDisabled: false, tokenDepositCap: null })
-            .accounts({
-                admin: wallet.publicKey,
-                mainState: mainStateWalletProvider.wallet.publicKey,
-                lstMint: new PublicKey(mint),
-            })
-            .rpc()
-    }
-
+    const cap = BigInt(`10000${"0".repeat(9)}`)
+    console.log("config, enable deposits for", mint)
+    console.log("deposit cap:", formatTokens(cap, 9, 2))
+    let configTx = await program.methods.configureSecondaryVault({
+        depositsDisabled: false,
+        tokenDepositCap: new BN(cap.toString())
+    })
+        .accounts({
+            admin: wallet.publicKey,
+            mainState: mainStateWalletProvider.wallet.publicKey,
+            lstMint: new PublicKey(mint),
+        })
+        .rpc()
+    console.log("tx hash", configTx)
 }
 
 // config for 0hs waiting time
 async function configWaitTimeHours(hs: number) {
     const mainStatePubKey = mainStateWalletProvider.wallet.publicKey
-    console.log("config, 0hs wait time")
+    console.log("config,", hs, "hs wait time")
     let configTx = await program.methods.configureMainVault({
         unstakeTicketWaitingHours: hs,
         treasuryMpsolAccount: null, // null => None => No change
@@ -197,11 +218,9 @@ async function configWaitTimeHours(hs: number) {
     await configTx.rpc()
 }
 
-async function configDevnet() {
+async function configMainnet() {
 
-    await configWaitTimeHours(0);
-    await configDevnetVault(MARINADE_MSOL_MINT)
-    await configDevnetVault(B_SOL_TOKEN_MINT)
+    await configWaitTimeHours(24 * 3);
     await updateLSTPrices()
 
 }
@@ -221,6 +240,6 @@ async function updatePrice(lstMint: string, stateAccount: string) {
         })
         .remainingAccounts([{
             pubkey: new PublicKey(stateAccount), isSigner: false, isWritable: false
-          }])
+        }])
         .rpc()
 }
