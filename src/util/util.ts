@@ -19,5 +19,5 @@ export function getNodeFileWalletProvider(pubKeyString: string, rpcUrl: string =
     // set env.ANCHOR_WALLET
     process.env.ANCHOR_WALLET = path.join(homedir(), ".config", "solana", pubKeyString + ".json")
     // reads keypair from process.env.ANCHOR_WALLET
-    return AnchorProvider.local(rpcUrl)
+    return AnchorProvider.local(rpcUrl,{commitment:"processed"})
 }

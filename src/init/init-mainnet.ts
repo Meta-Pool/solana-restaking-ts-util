@@ -31,11 +31,16 @@ const MARINADE_MSOL_MINT = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So";
 const MARINADE_POOL_PROGRAM = "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD";
 const MARINADE_STATE_ADDRESS = "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC";
 
-// B-SOL DEVNET also MAINNET
 const SPL_STAKE_POOL_PROGRAM = "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy"
+// B-SOL DEVNET also MAINNET
 const B_SOL_TOKEN_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
 // B-SOL MAINNET
 const B_SOL_SPL_STAKE_POOL_STATE_ADDRESS = "stk9ApL5HeVAwPLr3TLhDXdZS8ptVu7zp6ov8HFDuMi"
+
+// JITO-SOL DEVNET also MAINNET
+const JITO_SOL_TOKEN_MINT = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+// JITO-SOL MAINNET
+const JITO_SOL_SPL_STAKE_POOL_STATE_ADDRESS = "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb"
 
 asyncMain()
 
@@ -47,8 +52,8 @@ async function asyncMain() {
         await createMpSolTreasuryAccount()
     }
     else if (process.argv.includes("set-treasury")) {
-        const index = process.argv.findIndex(x=>x=="set-treasury")
-        const pubkeyString = process.argv[index+1]
+        const index = process.argv.findIndex(x => x == "set-treasury")
+        const pubkeyString = process.argv[index + 1]
         await configMpSolTreasuryAccount(pubkeyString)
     }
     else if (process.argv.includes("msol")) {
@@ -59,10 +64,10 @@ async function asyncMain() {
         )
     }
     else if (process.argv.includes("config-msol")) {
-        await configMainnetVault(MARINADE_MSOL_MINT)
+        await configVaultOnMainnet(MARINADE_MSOL_MINT)
     }
     else if (process.argv.includes("update-msol")) {
-        await updatePrice(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS)
+        await updatePriceBuilder(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS).rpc()
     }
     else if (process.argv.includes("bsol")) {
         await createSecondaryVault(
@@ -70,6 +75,22 @@ async function asyncMain() {
             "bSOL",
             B_SOL_TOKEN_MINT
         )
+    }
+    else if (process.argv.includes("config-bsol")) {
+        await configVaultOnMainnet(B_SOL_TOKEN_MINT)
+    }
+    else if (process.argv.includes("jitosol")) {
+        await createSecondaryVault(
+            mainStateWalletProvider.wallet.publicKey,
+            "JitoSOL",
+            JITO_SOL_TOKEN_MINT
+        )
+        await configVaultOnMainnet(JITO_SOL_TOKEN_MINT)
+        await updateLSTPrices()
+    }
+    else if (process.argv.includes("config-jitosol")) {
+        await configVaultOnMainnet(JITO_SOL_TOKEN_MINT)
+        await updateLSTPrices()
     }
     else if (process.argv.includes("config-mainnet")) {
         await configMainnet()
@@ -234,7 +255,7 @@ async function configMpSolTreasuryAccount(treasuryAccount: string) {
     console.log("tx hash", configTxHash)
 }
 
-async function configMainnetVault(mint: string) {
+async function configVaultOnMainnet(mint: string) {
 
     const cap = BigInt(`10000${"0".repeat(9)}`)
     console.log("config, enable deposits for", mint)
@@ -292,12 +313,16 @@ async function configMainnet() {
 
 async function updateLSTPrices() {
 
-    await updatePrice(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS)
-    await updatePrice(B_SOL_TOKEN_MINT, B_SOL_SPL_STAKE_POOL_STATE_ADDRESS)
+    console.log("update prices msol, bsol, jitosol")
+    await updatePriceBuilder(MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS).postInstructions([
+        await (updatePriceBuilder(B_SOL_TOKEN_MINT, B_SOL_SPL_STAKE_POOL_STATE_ADDRESS).instruction()),
+        await (updatePriceBuilder(JITO_SOL_TOKEN_MINT, JITO_SOL_SPL_STAKE_POOL_STATE_ADDRESS).instruction())
+    ])
+    .rpc()
 
 }
 
-async function updatePrice(lstMint: string, stateAccount: string) {
+function updatePriceBuilder(lstMint: string, stateAccount: string) {
     return program.methods.updateVaultTokenSolPrice()
         .accounts({
             mainState: mainStateWalletProvider.wallet.publicKey,
@@ -306,5 +331,4 @@ async function updatePrice(lstMint: string, stateAccount: string) {
         .remainingAccounts([{
             pubkey: new PublicKey(stateAccount), isSigner: false, isWritable: false
         }])
-        .rpc()
 }
