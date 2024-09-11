@@ -164,7 +164,7 @@ async function asyncMain() {
     }
     else {
         console.error("----")
-        console.error("ERR: expected argument: main|msol|bsol")
+        console.error("ERR: invalid arguments")
         console.error("----")
     }
 }
@@ -424,12 +424,12 @@ async function updateLSTPrices(ctx: Context, networkConfig: NetworkConfig) {
     let postInstructions = []
     if (networkConfig.bSolState) {
         postInstructions.push(
-            updatePriceBuilder(ctx, B_SOL_TOKEN_MINT, networkConfig.bSolState).instruction()
+            await updatePriceBuilder(ctx, B_SOL_TOKEN_MINT, networkConfig.bSolState).instruction()
         );
     }
     if (networkConfig.jitoSolState) {
         postInstructions.push(
-            updatePriceBuilder(ctx, JITO_SOL_TOKEN_MINT, networkConfig.jitoSolState).instruction()
+            await updatePriceBuilder(ctx, JITO_SOL_TOKEN_MINT, networkConfig.jitoSolState).instruction()
         );
     }
     await updatePriceBuilder(ctx, MARINADE_MSOL_MINT, MARINADE_STATE_ADDRESS)
