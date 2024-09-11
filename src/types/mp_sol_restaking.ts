@@ -70,8 +70,26 @@ export type MpSolRestaking = {
           "pda": {
             "seeds": [
               {
-                "kind": "account",
-                "path": "vaultState"
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  45,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  45,
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
               },
               {
                 "kind": "account",
@@ -274,6 +292,297 @@ export type MpSolRestaking = {
       "args": []
     },
     {
+      "name": "getLstFromStrat",
+      "discriminator": [
+        191,
+        211,
+        245,
+        177,
+        226,
+        248,
+        84,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "mainState",
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "operatorAuth",
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "lstMint",
+          "relations": [
+            "vaultState",
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "vaultState",
+          "docs": [
+            "secondary-vault state"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "account",
+                "path": "lstMint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vaultsAtaPdaAuth",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  115,
+                  45,
+                  97,
+                  116,
+                  97,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vaultLstAccount"
+        },
+        {
+          "name": "vaultStrategyRelationEntry",
+          "docs": [
+            "vault->strat relation entry",
+            "if this account exists, the common_strategy_state was correctly attached to the system"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  45,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  45,
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "commonStrategyState",
+          "docs": [
+            "must be the one mentioned in vault_strategy_relation_entry"
+          ],
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "vaultStratWithdrawAuth",
+          "docs": [
+            "for temp-ATA to move lst from strat back to the vault"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  115,
+                  116,
+                  95,
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lstWithdrawAccount",
+          "docs": [
+            "temp-ATA to move lst from strat back to the vault"
+          ],
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initMetadata",
+      "discriminator": [
+        226,
+        15,
+        9,
+        225,
+        77,
+        52,
+        247,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "mainState"
+        },
+        {
+          "name": "mpsolMintPdaAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  105,
+                  110,
+                  45,
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mpsolMint",
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "metadata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "tokenMetadataProgram"
+              },
+              {
+                "kind": "account",
+                "path": "mpsolMint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "tokenMetadataProgram",
+          "address": "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "initialize",
       "discriminator": [
         175,
@@ -343,6 +652,93 @@ export type MpSolRestaking = {
         {
           "name": "strategyRebalancerAuth",
           "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "setNextWithdrawAmount",
+      "discriminator": [
+        254,
+        168,
+        30,
+        56,
+        79,
+        179,
+        36,
+        120
+      ],
+      "accounts": [
+        {
+          "name": "mainState",
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "operatorAuth",
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "lstMint",
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "vaultStrategyRelationEntry",
+          "docs": [
+            "vault->strat relation entry",
+            "if this account exists, the common_strategy_state was correctly attached to the system"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  45,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  45,
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "commonStrategyState",
+          "docs": [
+            "must be the one mentioned in vault_strategy_relation_entry"
+          ],
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "lstAmount",
+          "type": "u64"
         }
       ]
     },
@@ -587,6 +983,187 @@ export type MpSolRestaking = {
       ]
     },
     {
+      "name": "transferLstToStrat",
+      "discriminator": [
+        228,
+        115,
+        228,
+        204,
+        23,
+        23,
+        250,
+        240
+      ],
+      "accounts": [
+        {
+          "name": "mainState",
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "operatorAuth",
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "lstMint",
+          "relations": [
+            "vaultState",
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "vaultState",
+          "docs": [
+            "secondary-vault state"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "account",
+                "path": "lstMint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vaultsAtaPdaAuth",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  115,
+                  45,
+                  97,
+                  116,
+                  97,
+                  45,
+                  97,
+                  117,
+                  116,
+                  104
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vaultLstAccount",
+          "writable": true
+        },
+        {
+          "name": "vaultStrategyRelationEntry",
+          "docs": [
+            "vault->strat relation entry",
+            "if this account exists, the common_strategy_state was correctly attached to the system"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  45,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  45,
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "strategyProgramCode"
+        },
+        {
+          "name": "commonStrategyState",
+          "docs": [
+            "must be the one mentioned in vault_strategy_relation_entry"
+          ],
+          "relations": [
+            "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "strategyAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "strategyProgramCode"
+            }
+          }
+        },
+        {
+          "name": "strategyDepositAccount",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "lstAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "unstake",
       "discriminator": [
         90,
@@ -660,8 +1237,7 @@ export type MpSolRestaking = {
         {
           "name": "lstMint",
           "relations": [
-            "vaultState",
-            "commonStrategyState"
+            "vaultState"
           ]
         },
         {
@@ -687,13 +1263,32 @@ export type MpSolRestaking = {
           "name": "vaultStrategyRelationEntry",
           "docs": [
             "vault->strat relation entry",
-            "if this account exists, the common_strategy_state was correctly attached to the vault"
+            "if this account exists, the common_strategy_state was correctly attached to the system"
           ],
+          "writable": true,
           "pda": {
             "seeds": [
               {
-                "kind": "account",
-                "path": "vaultState"
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116,
+                  45,
+                  115,
+                  116,
+                  114,
+                  97,
+                  116,
+                  45,
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
               },
               {
                 "kind": "account",
@@ -755,6 +1350,60 @@ export type MpSolRestaking = {
       "args": []
     },
     {
+      "name": "updateVaultTicketTarget",
+      "discriminator": [
+        109,
+        92,
+        224,
+        248,
+        208,
+        218,
+        227,
+        184
+      ],
+      "accounts": [
+        {
+          "name": "mainState",
+          "writable": true
+        },
+        {
+          "name": "operatorAuth",
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "lstMint",
+          "relations": [
+            "secondaryState"
+          ]
+        },
+        {
+          "name": "secondaryState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "account",
+                "path": "lstMint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "newTicketTargetSolAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "updateVaultTokenSolPrice",
       "discriminator": [
         91,
@@ -798,19 +1447,6 @@ export type MpSolRestaking = {
     }
   ],
   "accounts": [
-    {
-      "name": "commonVaultStrategyState",
-      "discriminator": [
-        191,
-        230,
-        198,
-        186,
-        212,
-        2,
-        140,
-        232
-      ]
-    },
     {
       "name": "mainVaultState",
       "discriminator": [
@@ -866,6 +1502,19 @@ export type MpSolRestaking = {
   ],
   "events": [
     {
+      "name": "getLstFromStratEvent",
+      "discriminator": [
+        67,
+        229,
+        235,
+        188,
+        45,
+        96,
+        236,
+        153
+      ]
+    },
+    {
       "name": "stakeEvent",
       "discriminator": [
         226,
@@ -889,6 +1538,19 @@ export type MpSolRestaking = {
         45,
         234,
         213
+      ]
+    },
+    {
+      "name": "transferLstToStratEvent",
+      "discriminator": [
+        117,
+        1,
+        135,
+        50,
+        219,
+        136,
+        11,
+        193
       ]
     },
     {
@@ -1046,45 +1708,29 @@ export type MpSolRestaking = {
       "code": 6022,
       "name": "performanceFeeTooHigh",
       "msg": "Performance Fee Too High"
+    },
+    {
+      "code": 6023,
+      "name": "errDeserializingCommonStrategyState",
+      "msg": "Err deserializing common strategy state"
+    },
+    {
+      "code": 6024,
+      "name": "newStrategyLstAmountShouldBeZero",
+      "msg": "new strategy lst amount should be 0"
+    },
+    {
+      "code": 6025,
+      "name": "amountIsZero",
+      "msg": "amount is 0"
+    },
+    {
+      "code": 6026,
+      "name": "existingAmountIsZero",
+      "msg": "existing amount is 0"
     }
   ],
   "types": [
-    {
-      "name": "commonVaultStrategyState",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "lstMint",
-            "type": "pubkey"
-          },
-          {
-            "name": "stratTotalLstAmount",
-            "docs": [
-              "invariant: vault_total_token_amount = in_external_program_amount + locally_stored_amount"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "locallyStoredAmount",
-            "docs": [
-              "lst amount here (not in external yield-generating programs)",
-              "invariant: strat_token_amount = in_external_program_amount + locally_stored_amount",
-              "invariant: locally_stored_amount = strat_lst_account.amount"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "inExternalProgramAmount",
-            "docs": [
-              "lst amount sent to external yield-generating programs (belongs to this strat, but not in strat_lst_account)",
-              "invariant: strat_lst_amount = in_external_program_amount + locally_stored_amount"
-            ],
-            "type": "u64"
-          }
-        ]
-      }
-    },
     {
       "name": "configureMainVaultValues",
       "type": {
@@ -1133,6 +1779,38 @@ export type MpSolRestaking = {
             "type": {
               "option": "u64"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "getLstFromStratEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mainState",
+            "type": "pubkey"
+          },
+          {
+            "name": "lstMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vaultStrategyRelationEntry",
+            "type": "pubkey"
+          },
+          {
+            "name": "desiredAmount",
+            "type": "u64"
+          },
+          {
+            "name": "existentAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lstAmount",
+            "type": "u64"
           }
         ]
       }
@@ -1388,6 +2066,30 @@ export type MpSolRestaking = {
       }
     },
     {
+      "name": "transferLstToStratEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mainState",
+            "type": "pubkey"
+          },
+          {
+            "name": "lstMint",
+            "type": "pubkey"
+          },
+          {
+            "name": "vaultStrategyRelationEntry",
+            "type": "pubkey"
+          },
+          {
+            "name": "lstAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "unstakeEvent",
       "type": {
         "kind": "struct",
@@ -1585,11 +2287,11 @@ export type MpSolRestaking = {
             "type": "pubkey"
           },
           {
-            "name": "lstAmountTarget",
+            "name": "nextWithdrawLstAmount",
             "docs": [
-              "target amount for this strat state",
-              "set by DAO voting.",
-              "if 0 => only-withdraw mode, the strat should be winding_down"
+              "target amount for the next withdraw",
+              "the strat should wind-down positions so this amount can be withdrawn",
+              "once withdrawn (call to strat-program) and in the same tx, set this value to zero"
             ],
             "type": "u64"
           },
@@ -1623,6 +2325,11 @@ export type MpSolRestaking = {
   ],
   "constants": [
     {
+      "name": "authoritySeed",
+      "type": "bytes",
+      "value": "[97, 117, 116, 104, 111, 114, 105, 116, 121]"
+    },
+    {
       "name": "mainVaultMintAuthSeed",
       "type": "bytes",
       "value": "[109, 97, 105, 110, 45, 109, 105, 110, 116]"
@@ -1651,6 +2358,16 @@ export type MpSolRestaking = {
       "name": "vaultsAtaAuthSeed",
       "type": "bytes",
       "value": "[118, 97, 117, 108, 116, 115, 45, 97, 116, 97, 45, 97, 117, 116, 104]"
+    },
+    {
+      "name": "vaultStratEntrySeed",
+      "type": "bytes",
+      "value": "[118, 97, 117, 108, 116, 45, 115, 116, 114, 97, 116, 45, 101, 110, 116, 114, 121]"
+    },
+    {
+      "name": "vaultStratWithdrawAtaAuthSeed",
+      "type": "bytes",
+      "value": "[108, 115, 116, 95, 119, 105, 116, 104, 100, 114, 97, 119, 95, 97, 117, 116, 104, 111, 114, 105, 116, 121]"
     }
   ]
 };
