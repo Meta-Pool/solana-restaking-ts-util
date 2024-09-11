@@ -536,32 +536,12 @@ export type MpSolRestaking = {
         },
         {
           "name": "metadata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  109,
-                  101,
-                  116,
-                  97,
-                  100,
-                  97,
-                  116,
-                  97
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "tokenMetadataProgram"
-              },
-              {
-                "kind": "account",
-                "path": "mpsolMint"
-              }
-            ]
-          }
+          "docs": [
+            "note: metaplex uses a different way to compute PDAs than anchor",
+            "this should be PDA(\"metadata\",token_metadata_program,mint) program:token_metadata_program",
+            "yes, token_metadata_program is repeated in the PDA generation"
+          ],
+          "writable": true
         },
         {
           "name": "rent",

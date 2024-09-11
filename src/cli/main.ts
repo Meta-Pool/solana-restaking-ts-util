@@ -220,6 +220,7 @@ async function initMetadata(ctx: Context) {
         ],
         TOKEN_METADATA_PROGRAM_ID
     );
+    console.log("metadata address",metadataAddress.toBase58())
     let tx = await ctx.program.methods.initMetadata()
         .accounts({
             admin: ctx.wallet.publicKey,
@@ -235,11 +236,13 @@ async function initMetadata(ctx: Context) {
         //console.log(result)
     }
     catch (ex) {
+        console.log("SIMULATION FAILURE")
         console.log(ex)
-        throw (ex)
+        throw ex
     }
     await ctx.wallet.signTransaction(tx)
 
+    console.log("sendAndConfirm...")
     const txHash = await
         ctx.program.provider.sendAndConfirm(tx)
 
