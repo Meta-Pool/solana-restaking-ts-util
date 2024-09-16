@@ -311,13 +311,6 @@ export type MpSolRestaking = {
           ]
         },
         {
-          "name": "operatorAuth",
-          "signer": true,
-          "relations": [
-            "mainState"
-          ]
-        },
-        {
           "name": "lstMint",
           "relations": [
             "vaultState",
@@ -375,7 +368,8 @@ export type MpSolRestaking = {
           }
         },
         {
-          "name": "vaultLstAccount"
+          "name": "vaultLstAccount",
+          "writable": true
         },
         {
           "name": "vaultStrategyRelationEntry",

@@ -305,13 +305,6 @@
           ]
         },
         {
-          "name": "operator_auth",
-          "signer": true,
-          "relations": [
-            "main_state"
-          ]
-        },
-        {
           "name": "lst_mint",
           "relations": [
             "vault_state",
@@ -369,7 +362,8 @@
           }
         },
         {
-          "name": "vault_lst_account"
+          "name": "vault_lst_account",
+          "writable": true
         },
         {
           "name": "vault_strategy_relation_entry",
