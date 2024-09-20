@@ -701,6 +701,54 @@
           "relations": [
             "vault_strategy_relation_entry"
           ]
+        },
+        {
+          "name": "vault_strat_withdraw_auth",
+          "docs": [
+            "for temp-ATA to move lst from strat back to the vault"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  115,
+                  116,
+                  95,
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "common_strategy_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lst_withdraw_account",
+          "docs": [
+            "temp-ATA to move lst from strat back to the vault"
+          ],
+          "writable": true
         }
       ],
       "args": [
@@ -1043,6 +1091,7 @@
             "vault->strat relation entry",
             "if this account exists, the common_strategy_state was correctly attached to the system"
           ],
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -1272,6 +1321,81 @@
           ],
           "relations": [
             "vault_strategy_relation_entry"
+          ]
+        },
+        {
+          "name": "strategy_authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "common_strategy_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "strategy_deposit_account"
+        },
+        {
+          "name": "vault_strat_withdraw_auth",
+          "docs": [
+            "for temp-ATA to move lst from strat back to the vault"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  115,
+                  116,
+                  95,
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "common_strategy_state"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lst_withdraw_account",
+          "docs": [
+            "temp-ATA to move lst from strat back to the vault"
           ]
         },
         {
@@ -1696,6 +1820,11 @@
       "code": 6026,
       "name": "ExistingAmountIsZero",
       "msg": "existing amount is 0"
+    },
+    {
+      "code": 6027,
+      "name": "MustWithdrawAllPendingLst",
+      "msg": "Must withdraw all pending lst"
     }
   ],
   "types": [

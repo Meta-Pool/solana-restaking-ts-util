@@ -707,6 +707,54 @@ export type MpSolRestaking = {
           "relations": [
             "vaultStrategyRelationEntry"
           ]
+        },
+        {
+          "name": "vaultStratWithdrawAuth",
+          "docs": [
+            "for temp-ATA to move lst from strat back to the vault"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  115,
+                  116,
+                  95,
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lstWithdrawAccount",
+          "docs": [
+            "temp-ATA to move lst from strat back to the vault"
+          ],
+          "writable": true
         }
       ],
       "args": [
@@ -1049,6 +1097,7 @@ export type MpSolRestaking = {
             "vault->strat relation entry",
             "if this account exists, the common_strategy_state was correctly attached to the system"
           ],
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -1278,6 +1327,81 @@ export type MpSolRestaking = {
           ],
           "relations": [
             "vaultStrategyRelationEntry"
+          ]
+        },
+        {
+          "name": "strategyAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "strategyDepositAccount"
+        },
+        {
+          "name": "vaultStratWithdrawAuth",
+          "docs": [
+            "for temp-ATA to move lst from strat back to the vault"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  115,
+                  116,
+                  95,
+                  119,
+                  105,
+                  116,
+                  104,
+                  100,
+                  114,
+                  97,
+                  119,
+                  95,
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "commonStrategyState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lstWithdrawAccount",
+          "docs": [
+            "temp-ATA to move lst from strat back to the vault"
           ]
         },
         {
@@ -1702,6 +1826,11 @@ export type MpSolRestaking = {
       "code": 6026,
       "name": "existingAmountIsZero",
       "msg": "existing amount is 0"
+    },
+    {
+      "code": 6027,
+      "name": "mustWithdrawAllPendingLst",
+      "msg": "Must withdraw all pending lst"
     }
   ],
   "types": [
