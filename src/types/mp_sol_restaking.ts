@@ -622,12 +622,71 @@ export type MpSolRestaking = {
         {
           "name": "operatorAuth",
           "type": "pubkey"
-        },
-        {
-          "name": "strategyRebalancerAuth",
-          "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "removeFreezeAuth",
+      "discriminator": [
+        141,
+        21,
+        189,
+        59,
+        188,
+        23,
+        164,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "mainState"
+        },
+        {
+          "name": "mpsolMint",
+          "writable": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "mpsolMintAuthority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "mainState"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  97,
+                  105,
+                  110,
+                  45,
+                  109,
+                  105,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "tokenProgram",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": []
     },
     {
       "name": "setNextWithdrawAmount",
@@ -1831,6 +1890,11 @@ export type MpSolRestaking = {
       "code": 6027,
       "name": "mustWithdrawAllPendingLst",
       "msg": "Must withdraw all pending lst"
+    },
+    {
+      "code": 6028,
+      "name": "withdrawFeeTooHigh",
+      "msg": "Withdraw Fee Too High"
     }
   ],
   "types": [
@@ -1841,6 +1905,12 @@ export type MpSolRestaking = {
         "fields": [
           {
             "name": "unstakeTicketWaitingHours",
+            "type": {
+              "option": "u16"
+            }
+          },
+          {
+            "name": "withdrawFeeBp",
             "type": {
               "option": "u16"
             }
@@ -1935,11 +2005,23 @@ export type MpSolRestaking = {
             "type": "pubkey"
           },
           {
-            "name": "strategyRebalancerAuth",
+            "name": "withdrawFeeBp",
             "docs": [
               "authority to move tokens in or out strategies, normally a DAO-authorized bot acting on votes"
             ],
-            "type": "pubkey"
+            "type": "u16"
+          },
+          {
+            "name": "reservedSpace",
+            "docs": [
+              "reserved space for extensions"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                30
+              ]
+            }
           },
           {
             "name": "mpsolMint",
@@ -2451,6 +2533,11 @@ export type MpSolRestaking = {
       "name": "maxWhitelistedVaultStrategies",
       "type": "u8",
       "value": "64"
+    },
+    {
+      "name": "maxWithdrawFeeBp",
+      "type": "u16",
+      "value": "100"
     },
     {
       "name": "minMovementLamports",

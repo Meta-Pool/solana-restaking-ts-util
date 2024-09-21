@@ -96,14 +96,15 @@ async function asyncMain() {
 
     let network;
     if (process.argv.includes("mainnet")) {
-        network = "mainnet-beta"
+        network = "mainnet"
     } else if (process.argv.includes("devnet")) {
         network = "devnet"
     } else {
         throw new Error("missing arg mainnet|devnet to select network")
     }
+    console.log("network", network)
     const networkConfig = getNetworkConfig(network)
-    console.log("network", networkConfig.rpcUrl)
+    console.log("rpc", networkConfig.rpcUrl)
     const ctx = getContext(networkConfig)
 
     if (process.argv.includes("init-state")) {
@@ -156,16 +157,22 @@ async function asyncMain() {
         await configVaultOnMainnet(ctx, JITO_SOL_TOKEN_MINT)
         await updateLSTPrices(ctx, networkConfig)
     }
-    else if (process.argv.includes("config-mainnet")) {
-        await configMainnet(ctx, networkConfig)
-    }
     else if (process.argv.includes("update-prices")) {
         await updateLSTPrices(ctx, networkConfig)
     }
+
+    else if (process.argv.includes("config")) {
+        await configProtocol(ctx)
+    }
+    else if (process.argv.includes("remove-freeze-auth")) {
+        await removeFreezeAuth(ctx)
+    }
+
     else {
         console.error("----")
         console.error("ERR: invalid arguments")
         console.error("----")
+        process.exit(1)
     }
 }
 
@@ -383,13 +390,14 @@ async function configVaultOnMainnet(ctx: Context, mint: string) {
     console.log("tx hash", configTx)
 }
 
-// config for 0hs waiting time
-async function configWaitTimeHours(ctx: Context, hs: number) {
+// config for main params
+async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number) {
     const mainStatePubKey = ctx.mainStateWalletProvider.wallet.publicKey
-    console.log("config,", hs, "hs wait time")
+    console.log("config,", hs, "hs wait time", withdrawFeeBp, "withdraw_fee_bp")
     let configTx = await ctx.program.methods.configureMainVault({
         unstakeTicketWaitingHours: hs,
         treasuryMpsolAccount: null, // null => None => No change
+        withdrawFeeBp,
         performanceFeeBp: null, // null => None => No change
         newAdminPubkey: null, // null => None => No change
     }
@@ -399,25 +407,25 @@ async function configWaitTimeHours(ctx: Context, hs: number) {
     })
 
     // // uncomment to show tx simulation program log
-    // {
-    //   console.log("configureMainVault.simulate()")
-    //   try {
-    //     let result = await configTx.simulate()
-    //     console.log(result)
-    //   }
-    //   catch (ex) {
-    //     console.log(ex)
-    //   }
-    // }
+    {
+      console.log("configureMainVault.simulate()")
+      try {
+        let result = await configTx.simulate()
+        console.log(result)
+      }
+      catch (ex) {
+        console.log(ex)
+        return
+      }
+    }
 
     // execute
     await configTx.rpc()
 }
 
-async function configMainnet(ctx: Context, networkConfig: NetworkConfig) {
+async function configProtocol(ctx: Context) {
 
-    await configWaitTimeHours(ctx, 24 * 3);
-    await updateLSTPrices(ctx, networkConfig)
+    await configMainParams(ctx, 24 * 10, 10);
 
 }
 
@@ -450,4 +458,31 @@ function updatePriceBuilder(ctx: Context, lstMint: string, stateAccount: string)
         .remainingAccounts([{
             pubkey: new PublicKey(stateAccount), isSigner: false, isWritable: false
         }])
+}
+
+// config for main params
+async function removeFreezeAuth(ctx: Context) {
+    const mainStatePubKey = ctx.mainStateWalletProvider.wallet.publicKey
+    console.log("removeFreezeAuth")
+    let txBuilder = await ctx.program.methods.removeFreezeAuth()
+    .accounts({
+        admin: ctx.wallet.publicKey,
+        mainState: mainStatePubKey,
+    })
+
+    // // uncomment to show tx simulation program log
+    {
+      console.log("removeFreezeAuth.simulate()")
+      try {
+        let result = await txBuilder.simulate()
+        console.log(result)
+      }
+      catch (ex) {
+        console.log(ex)
+        return
+      }
+    }
+
+    // execute
+    await txBuilder.rpc()
 }
