@@ -1,12 +1,12 @@
 import * as anchor from "@coral-xyz/anchor";
-import { MpSolRestaking } from "../types/mp_sol_restaking";
-import mpSolRestakingIdl from "../idl/mp_sol_restaking.json";
+import { MpSolRestaking } from "../res/mp_sol_restaking";
+import mpSolRestakingIdl from "../res/mp_sol_restaking.json";
 
 import * as util from "../util/util";
 import { SPL_TOKEN_PROGRAM_ID, splTokenProgram } from "@coral-xyz/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountIdempotentInstruction, getAssociatedTokenAddressSync } from "../util/associated-token-helper";
-import { formatTokens } from "../util/format";
+import { formatLamports, formatTokens } from "../util/format";
 import { BN } from "bn.js";
 
 console.log(process.argv)
@@ -110,7 +110,10 @@ async function asyncMain() {
     if (process.argv.includes("init-state")) {
         await createMainState(ctx)
     }
-    if (process.argv.includes("init-metadata")) {
+    else if (process.argv.includes("show")) {
+        await show(networkConfig, ctx)
+    }
+    else if (process.argv.includes("init-metadata")) {
         await initMetadata(ctx)
     }
     else if (process.argv.includes("create-treasury")) {
@@ -176,6 +179,27 @@ async function asyncMain() {
     }
 }
 
+type MainStateAccount = anchor.IdlAccounts<MpSolRestaking>["mainVaultState"]
+
+export async function show(networkConfig: NetworkConfig, ctx: Context) {
+
+    const MP_SOL_MAIN_STATE = networkConfig.mainStateAddress
+    console.log("main", MP_SOL_MAIN_STATE)
+
+    let globalMainState: MainStateAccount
+    globalMainState = await ctx.program.account["mainVaultState"].fetch(MP_SOL_MAIN_STATE)
+
+    console.log("admin", globalMainState.admin.toBase58())
+    console.log("unstakeTicketWaitingHours", globalMainState.unstakeTicketWaitingHours)
+    console.log("performanceFeeBp", globalMainState.performanceFeeBp)
+    console.log("withdrawFeeBp", globalMainState.withdrawFeeBp)
+    console.log("mpSOL mint", globalMainState.mpsolMint.toBase58())
+    console.log("treasuryMpsolAccount", globalMainState.treasuryMpsolAccount?.toBase58())
+    console.log("operatorAuth", globalMainState.operatorAuth.toBase58())
+    console.log("outstandingTicketsSolValue", formatLamports(globalMainState.outstandingTicketsSolValue))
+
+}
+
 async function createMainState(ctx: Context) {
 
     // ----------------------
@@ -227,7 +251,7 @@ async function initMetadata(ctx: Context) {
         ],
         TOKEN_METADATA_PROGRAM_ID
     );
-    console.log("metadata address",metadataAddress.toBase58())
+    console.log("metadata address", metadataAddress.toBase58())
     let tx = await ctx.program.methods.initMetadata()
         .accounts({
             admin: ctx.wallet.publicKey,
@@ -317,7 +341,7 @@ async function createSecondaryVault(
 
 //-------------------------------
 /// returns vault state address
-async function createMpSolTreasuryAccount(ctx: Context) {
+async function createMpSolTreasuryAccount(ctx: Context): Promise<PublicKey> {
 
     console.log(`creating ATA for owner ${ctx.program.provider.publicKey.toBase58()}, mint ${ctx.mpSolMintWalletProvider.publicKey.toBase58()} to use as MpSolTreasuryAccount`)
 
@@ -338,34 +362,32 @@ async function createMpSolTreasuryAccount(ctx: Context) {
     console.log("tx hash", txHash)
 
     console.log("MpSolTreasuryAccount", mpsolAta.toBase58())
+
+    return mpsolAta
 }
 
 async function configMpSolTreasuryAccount(ctx: Context, treasuryAccount: string) {
 
     const mainStatePubKey = ctx.mainStateWalletProvider.wallet.publicKey
     console.log("config, setTreasury, treasuryMpsolAccount", treasuryAccount)
-    let configTx = await ctx.program.methods.configureMainVault({
-        unstakeTicketWaitingHours: null, // null => None => No change
-        treasuryMpsolAccount: new anchor.web3.PublicKey(treasuryAccount),
-        performanceFeeBp: null, // null => None => No change
-        newAdminPubkey: null, // null => None => No change
-    }
-    ).accounts({
+    let configTx = await ctx.program.methods.configureTreasuryAccount()
+    .accounts({
         admin: ctx.wallet.publicKey,
         mainState: mainStatePubKey,
+        treasuryMpsolAccount: treasuryAccount,
     })
 
     // // uncomment to show tx simulation program log
-    // {
-    //   console.log("configureMainVault.simulate()")
-    //   try {
-    //     let result = await configTx.simulate()
-    //     console.log(result)
-    //   }
-    //   catch (ex) {
-    //     console.log(ex)
-    //   }
-    // }
+    {
+      console.log("configureMainVault.simulate()")
+      try {
+        let result = await configTx.simulate()
+        console.log(result)
+      }
+      catch (ex) {
+        console.log(ex)
+      }
+    }
 
     // execute
     const configTxHash = await configTx.rpc()
@@ -408,15 +430,15 @@ async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number)
 
     // // uncomment to show tx simulation program log
     {
-      console.log("configureMainVault.simulate()")
-      try {
-        let result = await configTx.simulate()
-        console.log(result)
-      }
-      catch (ex) {
-        console.log(ex)
-        return
-      }
+        console.log("configureMainVault.simulate()")
+        try {
+            let result = await configTx.simulate()
+            console.log(result)
+        }
+        catch (ex) {
+            console.log(ex)
+            return
+        }
     }
 
     // execute
@@ -425,7 +447,7 @@ async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number)
 
 async function configProtocol(ctx: Context) {
 
-    await configMainParams(ctx, 24 * 10, 10);
+    await configMainParams(ctx, 0, 10);
 
 }
 
@@ -465,22 +487,22 @@ async function removeFreezeAuth(ctx: Context) {
     const mainStatePubKey = ctx.mainStateWalletProvider.wallet.publicKey
     console.log("removeFreezeAuth")
     let txBuilder = await ctx.program.methods.removeFreezeAuth()
-    .accounts({
-        admin: ctx.wallet.publicKey,
-        mainState: mainStatePubKey,
-    })
+        .accounts({
+            admin: ctx.wallet.publicKey,
+            mainState: mainStatePubKey,
+        })
 
     // // uncomment to show tx simulation program log
     {
-      console.log("removeFreezeAuth.simulate()")
-      try {
-        let result = await txBuilder.simulate()
-        console.log(result)
-      }
-      catch (ex) {
-        console.log(ex)
-        return
-      }
+        console.log("removeFreezeAuth.simulate()")
+        try {
+            let result = await txBuilder.simulate()
+            console.log(result)
+        }
+        catch (ex) {
+            console.log(ex)
+            return
+        }
     }
 
     // execute

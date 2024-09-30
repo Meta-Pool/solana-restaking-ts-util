@@ -199,6 +199,42 @@ export type MpSolRestaking = {
       ]
     },
     {
+      "name": "configureTreasuryAccount",
+      "discriminator": [
+        13,
+        34,
+        28,
+        153,
+        29,
+        119,
+        81,
+        10
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "mainState",
+          "writable": true
+        },
+        {
+          "name": "mpsolMint",
+          "relations": [
+            "mainState"
+          ]
+        },
+        {
+          "name": "treasuryMpsolAccount"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "createSecondaryVault",
       "discriminator": [
         102,
@@ -640,7 +676,6 @@ export type MpSolRestaking = {
       "accounts": [
         {
           "name": "admin",
-          "writable": true,
           "signer": true,
           "relations": [
             "mainState"
@@ -1277,6 +1312,10 @@ export type MpSolRestaking = {
           "relations": [
             "mainState"
           ]
+        },
+        {
+          "name": "treasuryMpsolAccount",
+          "writable": true
         },
         {
           "name": "newTicketAccount",
@@ -1919,12 +1958,6 @@ export type MpSolRestaking = {
             "name": "performanceFeeBp",
             "type": {
               "option": "u16"
-            }
-          },
-          {
-            "name": "treasuryMpsolAccount",
-            "type": {
-              "option": "pubkey"
             }
           },
           {
