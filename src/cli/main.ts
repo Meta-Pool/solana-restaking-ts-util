@@ -1,4 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
+import { Program, Idl, AnchorProvider, setProvider } from "@coral-xyz/anchor";
 import { MpSolRestaking } from "../res/mp_sol_restaking";
 import mpSolRestakingIdl from "../res/mp_sol_restaking.json";
 
@@ -24,6 +25,7 @@ const JITO_SOL_TOKEN_MINT = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
 
 type NetworkConfig = {
     rpcUrl: string,
+    waitHs: number,
     adminPubkey: string;
     mainStateAddress: string,
     mSolState: string,
@@ -35,6 +37,7 @@ function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
     if (network == "mainnet") {
         return {
             rpcUrl: "https://api.mainnet-beta.solana.com",
+            waitHs: 10,
             adminPubkey: "MP5o14fjGUU6G562tivBsvUBohqFxiczbWGHrwXDEyQ",
             mainStateAddress: "mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA",
             mSolState: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC",
@@ -46,6 +49,7 @@ function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
     {
         return {
             rpcUrl: "https://api.devnet.solana.com",
+            waitHs: 0,
             adminPubkey: "DEVYT7nSvD4gzP6BH2N1ubUamErS4TXtBYwdVrFBBVr",
             mainStateAddress: "mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA",
             mSolState: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC",
@@ -57,7 +61,7 @@ function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
 }
 
 type Context = {
-    program: anchor.Program<anchor.Idl>,
+    program: anchor.Program<MpSolRestaking>,
     wallet: anchor.Wallet,
     operatorAuthKeyPair: anchor.Wallet; strategyRebalancerAuthKeyPair: anchor.Wallet;
     mainStateWalletProvider: anchor.AnchorProvider, mpSolMintWalletProvider: anchor.AnchorProvider
@@ -74,7 +78,7 @@ function getContext(networkConfig: NetworkConfig): Context {
     const operatorAuthKeyPair = provider.wallet;
     const strategyRebalancerAuthKeyPair = provider.wallet;
 
-    const program = new anchor.Program(mpSolRestakingIdl as anchor.Idl, provider)
+    const program: Program<MpSolRestaking> = new Program<MpSolRestaking>(mpSolRestakingIdl as MpSolRestaking, provider)
 
     const mainStateWalletProvider = util.getNodeFileWalletProvider("mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA")
     const mpSolMintWalletProvider = util.getNodeFileWalletProvider("mPsoLV53uAGXnPJw63W91t2VDqCVZcU5rTh3PWzxnLr")
@@ -165,7 +169,7 @@ async function asyncMain() {
     }
 
     else if (process.argv.includes("config")) {
-        await configProtocol(ctx)
+        await configProtocol(ctx, networkConfig.waitHs)
     }
     else if (process.argv.includes("remove-freeze-auth")) {
         await removeFreezeAuth(ctx)
@@ -206,7 +210,7 @@ async function createMainState(ctx: Context) {
     // initialize main state
     // ----------------------
     let tx = await ctx.program.methods.initialize(
-        ctx.operatorAuthKeyPair.publicKey, ctx.strategyRebalancerAuthKeyPair.publicKey
+        ctx.operatorAuthKeyPair.publicKey
     )
         .accounts({
             admin: ctx.wallet.publicKey,
@@ -252,12 +256,14 @@ async function initMetadata(ctx: Context) {
         TOKEN_METADATA_PROGRAM_ID
     );
     console.log("metadata address", metadataAddress.toBase58())
-    let tx = await ctx.program.methods.initMetadata()
-        .accounts({
+    const prog = ctx.program
+    let tx = await prog.methods
+        .initMetadata()
+        .accountsPartial({
             admin: ctx.wallet.publicKey,
             mainState: ctx.mainStateWalletProvider.publicKey,
-            mpsolTokenMint: ctx.mpSolMintWalletProvider.publicKey,
-            metadata: metadataAddress
+            mpsolMint: ctx.mpSolMintWalletProvider.publicKey,
+            metadata: metadataAddress,
         })
         .transaction()
 
@@ -325,12 +331,11 @@ async function createSecondaryVault(
     );
 
     const tx2 = await ctx.program.methods.createSecondaryVault()
-        .accounts({
-            // @ts-ignore
-            admin: wallet.publicKey,
+        .accountsPartial({
+            admin: ctx.program.provider.publicKey,
             mainState: mainStatePubKey,
             lstMint: lstMintPublickey,
-            secondaryState: vaultSecondaryStateAddress,
+            vaultState: vaultSecondaryStateAddress,
             vaultLstAccount: vaultTokenAccountAddress
         })
         .preInstructions([createAtaIx])
@@ -371,22 +376,22 @@ async function configMpSolTreasuryAccount(ctx: Context, treasuryAccount: string)
     const mainStatePubKey = ctx.mainStateWalletProvider.wallet.publicKey
     console.log("config, setTreasury, treasuryMpsolAccount", treasuryAccount)
     let configTx = await ctx.program.methods.configureTreasuryAccount()
-    .accounts({
-        admin: ctx.wallet.publicKey,
-        mainState: mainStatePubKey,
-        treasuryMpsolAccount: treasuryAccount,
-    })
+        .accountsPartial({
+            admin: ctx.wallet.publicKey,
+            mainState: mainStatePubKey,
+            treasuryMpsolAccount: treasuryAccount,
+        })
 
     // // uncomment to show tx simulation program log
     {
-      console.log("configureMainVault.simulate()")
-      try {
-        let result = await configTx.simulate()
-        console.log(result)
-      }
-      catch (ex) {
-        console.log(ex)
-      }
+        console.log("configureMainVault.simulate()")
+        try {
+            let result = await configTx.simulate()
+            console.log(result)
+        }
+        catch (ex) {
+            console.log(ex)
+        }
     }
 
     // execute
@@ -403,10 +408,10 @@ async function configVaultOnMainnet(ctx: Context, mint: string) {
         depositsDisabled: false,
         tokenDepositCap: new BN(cap.toString())
     })
-        .accounts({
+        .accountsPartial({
             admin: ctx.wallet.publicKey,
             mainState: ctx.mainStateWalletProvider.wallet.publicKey,
-            lstMint: new PublicKey(mint),
+            lstMint: mint,
         })
         .rpc()
     console.log("tx hash", configTx)
@@ -418,13 +423,11 @@ async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number)
     console.log("config,", hs, "hs wait time", withdrawFeeBp, "withdraw_fee_bp")
     let configTx = await ctx.program.methods.configureMainVault({
         unstakeTicketWaitingHours: hs,
-        treasuryMpsolAccount: null, // null => None => No change
         withdrawFeeBp,
         performanceFeeBp: null, // null => None => No change
         newAdminPubkey: null, // null => None => No change
     }
     ).accounts({
-        admin: ctx.wallet.publicKey,
         mainState: mainStatePubKey,
     })
 
@@ -442,12 +445,13 @@ async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number)
     }
 
     // execute
-    await configTx.rpc()
+    let txHash = await configTx.rpc()
+    console.log("txHash",txHash)
 }
 
-async function configProtocol(ctx: Context) {
+async function configProtocol(ctx: Context, waitHs: number) {
 
-    await configMainParams(ctx, 0, 10);
+    await configMainParams(ctx, waitHs, 10);
 
 }
 
@@ -473,7 +477,7 @@ async function updateLSTPrices(ctx: Context, networkConfig: NetworkConfig) {
 
 function updatePriceBuilder(ctx: Context, lstMint: string, stateAccount: string) {
     return ctx.program.methods.updateVaultTokenSolPrice()
-        .accounts({
+        .accountsPartial({
             mainState: ctx.mainStateWalletProvider.wallet.publicKey,
             lstMint: lstMint,
         })
@@ -488,7 +492,6 @@ async function removeFreezeAuth(ctx: Context) {
     console.log("removeFreezeAuth")
     let txBuilder = await ctx.program.methods.removeFreezeAuth()
         .accounts({
-            admin: ctx.wallet.publicKey,
             mainState: mainStatePubKey,
         })
 

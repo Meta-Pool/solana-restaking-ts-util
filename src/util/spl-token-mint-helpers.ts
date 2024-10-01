@@ -83,10 +83,10 @@ export async function sendTx(provider: Provider, wallet: any, instructions: Tran
 }
 
 // Function to mint tokens
-export async function mintTokens(provider: Provider, 
-    wallet: any, 
-    mint: PublicKey, 
-    recipient: PublicKey, 
+export async function mintTokens(provider: Provider,
+    wallet: any,
+    mint: PublicKey,
+    recipient: PublicKey,
     amountBN: BN)
     : Promise<PublicKey> {
 
@@ -112,7 +112,8 @@ export async function mintTokens(provider: Provider,
         await
             splToken.methods.mintTo(amountBN)
             .accounts({
-                mint, owner: wallet.pubkey,
+                mint,
+                owner: wallet.pubkey,
             })
             .instruction()
     );
