@@ -9,21 +9,25 @@ import { PublicKey } from "@solana/web3.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountIdempotentInstruction, getAssociatedTokenAddressSync } from "../util/associated-token-helper";
 import { formatLamports, formatTokens } from "../util/format";
 import { BN } from "bn.js";
+import { show, showVaults } from "./show";
+import { readFileSync } from "fs";
+import { homedir } from "os";
+import path from "path";
 
 console.log(process.argv)
 
 // MARINADE DEVNET also MAINNET
-const MARINADE_MSOL_MINT = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So";
-const MARINADE_POOL_PROGRAM = "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD";
-const MARINADE_STATE_ADDRESS = "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC";
+export const MARINADE_MSOL_MINT = "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So";
+export const MARINADE_POOL_PROGRAM = "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD";
+export const MARINADE_STATE_ADDRESS = "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC";
 
-const SPL_STAKE_POOL_PROGRAM = "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy"
+export const SPL_STAKE_POOL_PROGRAM = "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy"
 // B-SOL DEVNET also MAINNET
-const B_SOL_TOKEN_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
+export const B_SOL_TOKEN_MINT = "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1"
 // JITO-SOL DEVNET also MAINNET
-const JITO_SOL_TOKEN_MINT = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+export const JITO_SOL_TOKEN_MINT = "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
 
-type NetworkConfig = {
+export type NetworkConfig = {
     rpcUrl: string,
     waitHs: number,
     adminPubkey: string;
@@ -33,10 +37,11 @@ type NetworkConfig = {
     jitoSolState: string | undefined
 }
 
-function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
+export function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
     if (network == "mainnet") {
+        const rpcUrl = readFileSync(path.join(homedir(), ".config", "solana", "be-rpcpool-token-url")).toString()
         return {
-            rpcUrl: "https://api.mainnet-beta.solana.com",
+            rpcUrl: rpcUrl||"https://api.mainnet-beta.solana.com",
             waitHs: 10,
             adminPubkey: "MP5o14fjGUU6G562tivBsvUBohqFxiczbWGHrwXDEyQ",
             mainStateAddress: "mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA",
@@ -60,14 +65,14 @@ function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
     }
 }
 
-type Context = {
+export type Context = {
     program: anchor.Program<MpSolRestaking>,
     wallet: anchor.Wallet,
     operatorAuthKeyPair: anchor.Wallet; strategyRebalancerAuthKeyPair: anchor.Wallet;
     mainStateWalletProvider: anchor.AnchorProvider, mpSolMintWalletProvider: anchor.AnchorProvider
 }
 
-function getContext(networkConfig: NetworkConfig): Context {
+export function getContext(networkConfig: NetworkConfig): Context {
 
     const provider = util.getNodeFileWalletProvider(
         networkConfig.adminPubkey,
@@ -117,11 +122,17 @@ async function asyncMain() {
     else if (process.argv.includes("show")) {
         await show(networkConfig, ctx)
     }
+    else if (process.argv.includes("show-vaults")) {
+        await showVaults(networkConfig, ctx)
+    }
     else if (process.argv.includes("init-metadata")) {
         await initMetadata(ctx)
     }
     else if (process.argv.includes("create-treasury")) {
         await createMpSolTreasuryAccount(ctx)
+    }
+    else if (process.argv.includes("create-temp-accounts")) {
+        await createMpSolTempTransferAccounts(ctx)
     }
     else if (process.argv.includes("set-treasury")) {
         const index = process.argv.findIndex(x => x == "set-treasury")
@@ -183,26 +194,8 @@ async function asyncMain() {
     }
 }
 
-type MainStateAccount = anchor.IdlAccounts<MpSolRestaking>["mainVaultState"]
+export type MainStateAccount = anchor.IdlAccounts<MpSolRestaking>["mainVaultState"]
 
-export async function show(networkConfig: NetworkConfig, ctx: Context) {
-
-    const MP_SOL_MAIN_STATE = networkConfig.mainStateAddress
-    console.log("main", MP_SOL_MAIN_STATE)
-
-    let globalMainState: MainStateAccount
-    globalMainState = await ctx.program.account["mainVaultState"].fetch(MP_SOL_MAIN_STATE)
-
-    console.log("admin", globalMainState.admin.toBase58())
-    console.log("unstakeTicketWaitingHours", globalMainState.unstakeTicketWaitingHours)
-    console.log("performanceFeeBp", globalMainState.performanceFeeBp)
-    console.log("withdrawFeeBp", globalMainState.withdrawFeeBp)
-    console.log("mpSOL mint", globalMainState.mpsolMint.toBase58())
-    console.log("treasuryMpsolAccount", globalMainState.treasuryMpsolAccount?.toBase58())
-    console.log("operatorAuth", globalMainState.operatorAuth.toBase58())
-    console.log("outstandingTicketsSolValue", formatLamports(globalMainState.outstandingTicketsSolValue))
-
-}
 
 async function createMainState(ctx: Context) {
 
@@ -345,7 +338,6 @@ async function createSecondaryVault(
 }
 
 //-------------------------------
-/// returns vault state address
 async function createMpSolTreasuryAccount(ctx: Context): Promise<PublicKey> {
 
     console.log(`creating ATA for owner ${ctx.program.provider.publicKey.toBase58()}, mint ${ctx.mpSolMintWalletProvider.publicKey.toBase58()} to use as MpSolTreasuryAccount`)
@@ -369,6 +361,70 @@ async function createMpSolTreasuryAccount(ctx: Context): Promise<PublicKey> {
     console.log("MpSolTreasuryAccount", mpsolAta.toBase58())
 
     return mpsolAta
+}
+
+//-------------------------------
+async function createMpSolTempTransferAccounts(ctx: Context): Promise<void> {
+
+    const vaultStratWithdrawAtaAuthSeed = util.idlConstant(ctx.program.idl, "vaultStratWithdrawAtaAuthSeed")
+    console.log(typeof vaultStratWithdrawAtaAuthSeed)
+    let decoder = new TextDecoder()
+    console.log(`vaultStratWithdrawAtaAuthSeed: ${decoder.decode(vaultStratWithdrawAtaAuthSeed)}`)
+    // get all vault-strategy relations
+    const vaultStrategyRelations = await ctx.program.account.vaultStrategyRelationEntry.all()
+    let strategiesStates: PublicKey[] = []
+    // get unique strategiesStates
+    for (const [index, vsr] of vaultStrategyRelations.entries()) {
+        let stratCommonState = vsr.account.commonStrategyState
+        if (!strategiesStates.find(x => x.equals(stratCommonState))) {
+            strategiesStates.push(stratCommonState)
+        }
+    }
+    // -----
+    const tx = new anchor.web3.Transaction()
+    // for each unique strategy state
+    for (let strategyState of strategiesStates) {
+        console.log(`strat state: ${strategyState.toBase58()}`)
+        /// CHECK: get vault Auth PDA
+        /// for temp-ATA to move lst from strat back to the vault
+        // #[account(
+        //     seeds = [
+        //         crate::VAULT_STRAT_WITHDRAW_ATA_AUTH_SEED,
+        //         &common_strategy_state.key().to_bytes(),
+        //     ],
+        //     bump
+        // )]
+        // pub vault_strat_withdraw_auth: UncheckedAccount<'info>,
+
+
+        const [vaultStratWithdrawAuth, bump] =
+            PublicKey.findProgramAddressSync(
+                [
+                    vaultStratWithdrawAtaAuthSeed,
+                    strategyState.toBuffer(),
+                ],
+                ctx.program.programId
+            )
+
+        console.log(`creating ATA for temp transfer, owner is program-PDA, owner vaultStratWithdrawAuth ${vaultStratWithdrawAuth.toBase58()}, mint ${ctx.mpSolMintWalletProvider.publicKey.toBase58()} to use as temp-transfer`)
+
+        const mpsolAta =
+            getAssociatedTokenAddressSync(ctx.mpSolMintWalletProvider.publicKey, vaultStratWithdrawAuth, true);
+        console.log("PDA owned ATA for temp transfer", mpsolAta.toBase58())
+
+        const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+            ctx.program.provider.publicKey, // payer
+            mpsolAta,
+            vaultStratWithdrawAuth, // owner
+            ctx.mpSolMintWalletProvider.publicKey, // mint
+            SPL_TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+        );
+        tx.add(createAtaIx)
+    }
+    console.log("sending transaction")
+    const txHash = await ctx.program.provider.sendAndConfirm(tx)
+    console.log("tx hash", txHash)
 }
 
 async function configMpSolTreasuryAccount(ctx: Context, treasuryAccount: string) {
@@ -446,7 +502,7 @@ async function configMainParams(ctx: Context, hs: number, withdrawFeeBp: number)
 
     // execute
     let txHash = await configTx.rpc()
-    console.log("txHash",txHash)
+    console.log("txHash", txHash)
 }
 
 async function configProtocol(ctx: Context, waitHs: number) {
