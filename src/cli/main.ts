@@ -368,8 +368,7 @@ async function createMpSolTempTransferAccounts(ctx: Context): Promise<void> {
 
     const vaultStratWithdrawAtaAuthSeed = util.idlConstant(ctx.program.idl, "vaultStratWithdrawAtaAuthSeed")
     console.log(typeof vaultStratWithdrawAtaAuthSeed)
-    let decoder = new TextDecoder()
-    console.log(`vaultStratWithdrawAtaAuthSeed: ${decoder.decode(vaultStratWithdrawAtaAuthSeed)}`)
+    console.log(`vaultStratWithdrawAtaAuthSeed: ${Buffer.from(vaultStratWithdrawAtaAuthSeed).toString('utf8')}`)
     // get all vault-strategy relations
     const vaultStrategyRelations = await ctx.program.account.vaultStrategyRelationEntry.all()
     let strategiesStates: PublicKey[] = []
