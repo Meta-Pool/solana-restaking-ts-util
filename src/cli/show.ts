@@ -1,4 +1,5 @@
 import { web3 } from "@coral-xyz/anchor"
+import { solToLstValue } from "../util/conversion"
 import { formatLamports, formatPrice32p } from "../util/format"
 import { Context, MainStateAccount, NetworkConfig } from "./main"
 
@@ -42,6 +43,7 @@ export async function showVaults(networkConfig: NetworkConfig, ctx: Context) {
         console.log("tokenDepositCap", formatLamports(vault.account.tokenDepositCap))
         console.log("vaultTotalLstAmount", formatLamports(vault.account.vaultTotalLstAmount))
         console.log("locallyStoredAmount", formatLamports(vault.account.locallyStoredAmount))
+        console.log(`ticketsTargetSolAmount:${formatLamports(vault.account.ticketsTargetSolAmount)}, in lst:${formatLamports(solToLstValue(vault.account.ticketsTargetSolAmount, vault.account.lstSolPriceP32))}`)
         console.log("inStrategiesAmount", formatLamports(vault.account.inStrategiesAmount))
         console.log("LST price", formatPrice32p(vault.account.lstSolPriceP32))
         console.log("LST price timestamp", new Date(vault.account.lstSolPriceTimestamp.toNumber()*1000))
@@ -53,7 +55,7 @@ export async function showVaults(networkConfig: NetworkConfig, ctx: Context) {
                 console.log(`\t commonStrategyState ${vsr.account.commonStrategyState.toBase58()}`)
                 console.log(`\t lastReadStratLstAmount ${formatLamports(vsr.account.lastReadStratLstAmount)}`)
                 console.log(`\t lastReadStratLstTimestamp`,new Date(vsr.account.lastReadStratLstTimestamp.toNumber()*1000))
-                console.log(`\t ticketsTargetSolAmount ${formatLamports(vsr.account.ticketsTargetSolAmount)}`)
+                // deprecated console.log(`\t ticketsTargetSolAmount ${formatLamports(vsr.account.ticketsTargetSolAmount)}`)
                 console.log(`\t nextWithdrawLstAmount ${formatLamports(vsr.account.nextWithdrawLstAmount)}`)
 
             }
