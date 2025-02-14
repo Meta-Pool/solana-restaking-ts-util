@@ -10,7 +10,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, createAssociatedTokenAccountIdempotentInst
 import { formatLamports, formatTokens } from "../util/format";
 import { BN } from "bn.js";
 import { show, showVaults } from "./show";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { homedir } from "os";
 import path from "path";
 
@@ -39,9 +39,13 @@ export type NetworkConfig = {
 
 export function getNetworkConfig(network: "mainnet" | "devnet"): NetworkConfig {
     if (network == "mainnet") {
-        const rpcUrl = readFileSync(path.join(homedir(), ".config", "solana", "be-rpcpool-token-url")).toString()
+        let rpcUrl = "https://api.mainnet-beta.solana.com"
+        let privateRcpUrlFile = path.join(homedir(), ".config", "solana", "private-rpc-url")
+        if (existsSync(privateRcpUrlFile)) {
+            rpcUrl = readFileSync(privateRcpUrlFile).toString()
+        }
         return {
-            rpcUrl: rpcUrl||"https://api.mainnet-beta.solana.com",
+            rpcUrl,
             waitHs: 10,
             adminPubkey: "MP5o14fjGUU6G562tivBsvUBohqFxiczbWGHrwXDEyQ",
             mainStateAddress: "mpsoLeuCF3LwrJWbzxNd81xRafePFfPhsNvGsAMhUAA",
